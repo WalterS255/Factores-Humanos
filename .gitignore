@@ -1,0 +1,15 @@
+# Frontend
+frontendTprints/node_modules/
+frontendTprints/dist/
+
+# Backend
+backendTprints/target/
+backendTprints/.mvn/
+*.class
+*.jar
+*.war
+
+# General
+*.env
+.DS_Store
+Thumbs.db
