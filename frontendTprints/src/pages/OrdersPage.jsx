@@ -3,9 +3,25 @@ import { Link, useNavigate } from "react-router-dom";
 import BottomNav from "../components/BottomNav.jsx";
 import { createOrder } from "../services/orderService.js";
 import { isAuthenticated } from "../services/api.js";
+import {
+  createAddress,
+  deleteAddress,
+  getMyAddresses,
+} from "../services/addressService.js";
 
 const CART_STORAGE_KEY = "tprints-cart";
 const SHIPPING_COST = 8000;
+
+const EMPTY_FORM = {
+  nombreRecibe: "",
+  telefonoContacto: "",
+  direccion: "",
+  ciudad: "",
+  departamento: "",
+  codigoPostal: "",
+  indicaciones: "",
+  esPrincipal: false,
+};
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("es-CO", {
@@ -17,27 +33,239 @@ function formatCurrency(value) {
 
 function getStoredCart() {
   try {
-    const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-    return savedCart ? JSON.parse(savedCart) : [];
-  } catch (error) {
-    console.error("No se pudo leer el carrito", error);
+    const saved = localStorage.getItem(CART_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
     return [];
   }
 }
 
+// ── Modal para crear una nueva dirección ──────────────────────────────────────
+function AddressModal({ onClose, onSaved }) {
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      const nueva = await createAddress(form);
+      onSaved(nueva);
+    } catch (err) {
+      setError(err.message || "No se pudo guardar la dirección");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Nueva dirección de envío"
+    >
+      <div className="w-full max-w-lg rounded-sm bg-white p-6 shadow-xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h3
+            className="text-xl text-gray-900"
+            style={{ fontFamily: "'Noto Serif', serif" }}
+          >
+            Nueva dirección de envío
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-700 text-2xl leading-none"
+            aria-label="Cerrar"
+          >
+            ×
+          </button>
+        </div>
+
+        {error && (
+          <p className="mb-4 rounded bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
+            {error}
+          </p>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field
+              label="Nombre de quien recibe *"
+              name="nombreRecibe"
+              value={form.nombreRecibe}
+              onChange={handleChange}
+              required
+            />
+            <Field
+              label="Teléfono de contacto"
+              name="telefonoContacto"
+              value={form.telefonoContacto}
+              onChange={handleChange}
+            />
+          </div>
+
+          <Field
+            label="Dirección *"
+            name="direccion"
+            value={form.direccion}
+            onChange={handleChange}
+            required
+            placeholder="Calle, número, apartamento…"
+          />
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field
+              label="Ciudad *"
+              name="ciudad"
+              value={form.ciudad}
+              onChange={handleChange}
+              required
+            />
+            <Field
+              label="Departamento"
+              name="departamento"
+              value={form.departamento}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field
+              label="Código postal"
+              name="codigoPostal"
+              value={form.codigoPostal}
+              onChange={handleChange}
+            />
+            <Field
+              label="Indicaciones adicionales"
+              name="indicaciones"
+              value={form.indicaciones}
+              onChange={handleChange}
+              placeholder="Barrio, referencia…"
+            />
+          </div>
+
+          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+            <input
+              type="checkbox"
+              name="esPrincipal"
+              checked={form.esPrincipal}
+              onChange={handleChange}
+              className="accent-gray-900"
+            />
+            Establecer como dirección principal
+          </label>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 border border-gray-300 text-gray-700 text-xs tracking-widest
+                         uppercase py-2.5 rounded-sm hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 bg-gray-900 text-white text-xs tracking-widest uppercase
+                         py-2.5 rounded-sm hover:bg-gray-700 transition-colors
+                         disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {saving ? "Guardando…" : "Guardar dirección"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, name, value, onChange, required, placeholder }) {
+  return (
+    <label className="block">
+      <span className="text-xs text-gray-500 font-semibold">{label}</span>
+      <input
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        placeholder={placeholder}
+        className="mt-1 h-10 w-full border border-gray-200 bg-gray-50 px-3 text-sm
+                   outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 rounded-sm"
+      />
+    </label>
+  );
+}
+
+// ── Página principal ──────────────────────────────────────────────────────────
 export default function OrdersPage() {
   const navigate = useNavigate();
 
   const [cartItems, setCartItems] = useState([]);
-  const [idDireccionEnvio, setIdDireccionEnvio] = useState("");
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
   const [metodoPago, setMetodoPago] = useState("PSE");
+  const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loadingOrder, setLoadingOrder] = useState(false);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     setCartItems(getStoredCart());
+    if (isAuthenticated()) fetchAddresses();
   }, []);
+
+  const fetchAddresses = async () => {
+    setLoadingAddresses(true);
+    try {
+      const data = await getMyAddresses();
+      setAddresses(data);
+      // Pre-seleccionar la dirección principal si existe
+      const principal = data.find((d) => d.esPrincipal);
+      if (principal) setSelectedAddressId(String(principal.idDireccion));
+      else if (data.length === 1) setSelectedAddressId(String(data[0].idDireccion));
+    } catch {
+      // silencioso — el usuario verá el botón para agregar
+    } finally {
+      setLoadingAddresses(false);
+    }
+  };
+
+  const handleAddressSaved = (nueva) => {
+    setAddresses((prev) => {
+      const sinPrincipal = nueva.esPrincipal
+        ? prev.map((d) => ({ ...d, esPrincipal: false }))
+        : prev;
+      return [...sinPrincipal, nueva];
+    });
+    setSelectedAddressId(String(nueva.idDireccion));
+    setShowModal(false);
+  };
+
+  const handleDeleteAddress = async (id) => {
+    if (!window.confirm("¿Eliminar esta dirección?")) return;
+    setDeletingId(id);
+    try {
+      await deleteAddress(id);
+      setAddresses((prev) => prev.filter((d) => d.idDireccion !== id));
+      if (selectedAddressId === String(id)) setSelectedAddressId("");
+    } catch (err) {
+      setError(err.message || "No se pudo eliminar la dirección");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const subtotal = useMemo(
     () =>
@@ -53,17 +281,17 @@ export default function OrdersPage() {
 
   const updateQuantity = (idVariante, nextQuantity) => {
     const quantity = Math.max(1, nextQuantity);
-    const updatedCart = cartItems.map((item) =>
+    const updated = cartItems.map((item) =>
       item.idVariante === idVariante ? { ...item, quantity } : item
     );
-    setCartItems(updatedCart);
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
+    setCartItems(updated);
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updated));
   };
 
   const removeItem = (idVariante) => {
-    const updatedCart = cartItems.filter((item) => item.idVariante !== idVariante);
-    setCartItems(updatedCart);
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
+    const updated = cartItems.filter((item) => item.idVariante !== idVariante);
+    setCartItems(updated);
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updated));
   };
 
   const handleCreateOrder = async () => {
@@ -74,19 +302,17 @@ export default function OrdersPage() {
       navigate("/login");
       return;
     }
-
-    if (!idDireccionEnvio) {
-      setError("Debes ingresar el ID de la dirección de envío.");
+    if (!selectedAddressId) {
+      setError("Debes seleccionar o agregar una dirección de envío.");
       return;
     }
-
     if (!cartItems.length) {
       setError("El carrito está vacío.");
       return;
     }
 
     const payload = {
-      idDireccionEnvio: Number(idDireccionEnvio),
+      idDireccionEnvio: Number(selectedAddressId),
       metodoPago,
       items: cartItems.map((item) => ({
         idVariante: item.idVariante,
@@ -101,13 +327,19 @@ export default function OrdersPage() {
       const pedido = await createOrder(payload);
       localStorage.removeItem(CART_STORAGE_KEY);
       setCartItems([]);
-      setSuccess(`Pedido #${pedido.idPedido} creado correctamente. Total: ${formatCurrency(pedido.total)}`);
-    } catch (error) {
-      setError(error.message || "No se pudo crear el pedido");
+      setSuccess(
+        `Pedido #${pedido.idPedido} creado correctamente. Total: ${formatCurrency(pedido.total)}`
+      );
+    } catch (err) {
+      setError(err.message || "No se pudo crear el pedido");
     } finally {
       setLoadingOrder(false);
     }
   };
+
+  const selectedAddress = addresses.find(
+    (d) => String(d.idDireccion) === selectedAddressId
+  );
 
   return (
     <div
@@ -122,6 +354,13 @@ export default function OrdersPage() {
       >
         Saltar al contenido principal
       </a>
+
+      {showModal && (
+        <AddressModal
+          onClose={() => setShowModal(false)}
+          onSaved={handleAddressSaved}
+        />
+      )}
 
       <main
         id="carrito-contenido"
@@ -156,7 +395,6 @@ export default function OrdersPage() {
             {success}
           </div>
         )}
-
         {error && (
           <div className="mb-8 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-600">
             {error}
@@ -227,7 +465,9 @@ export default function OrdersPage() {
                       </p>
                       <div className="flex items-center overflow-hidden rounded-full border border-gray-200">
                         <button
-                          onClick={() => updateQuantity(item.idVariante, Number(item.quantity || 1) - 1)}
+                          onClick={() =>
+                            updateQuantity(item.idVariante, Number(item.quantity || 1) - 1)
+                          }
                           className="grid h-9 w-9 place-items-center text-gray-500 hover:bg-gray-100 transition-colors"
                         >
                           -
@@ -236,7 +476,9 @@ export default function OrdersPage() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.idVariante, Number(item.quantity || 1) + 1)}
+                          onClick={() =>
+                            updateQuantity(item.idVariante, Number(item.quantity || 1) + 1)
+                          }
                           className="grid h-9 w-9 place-items-center text-gray-500 hover:bg-gray-100 transition-colors"
                         >
                           +
@@ -262,21 +504,98 @@ export default function OrdersPage() {
             </h2>
 
             <div className="space-y-4 mb-6">
-              <label className="block">
-                <span className="text-xs tracking-widest uppercase text-gray-500 font-semibold">
-                  ID dirección de envío
-                </span>
-                <input
-                  value={idDireccionEnvio}
-                  onChange={(e) => setIdDireccionEnvio(e.target.value)}
-                  type="number"
-                  min="1"
-                  placeholder="Ej: 1"
-                  className="mt-2 h-11 w-full border border-gray-200 bg-gray-50 px-3 text-sm
-                             outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 rounded-sm"
-                />
-              </label>
 
+              {/* ── Selector de dirección ── */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs tracking-widest uppercase text-gray-500 font-semibold">
+                    Dirección de envío
+                  </span>
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="text-xs text-gray-900 underline underline-offset-2 hover:text-gray-600 transition-colors"
+                  >
+                    + Nueva
+                  </button>
+                </div>
+
+                {loadingAddresses ? (
+                  <p className="text-xs text-gray-400 py-2">Cargando direcciones…</p>
+                ) : addresses.length === 0 ? (
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="w-full border-2 border-dashed border-gray-200 rounded-sm py-4
+                               text-sm text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    Agregar dirección de envío
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    {addresses.map((addr) => (
+                      <label
+                        key={addr.idDireccion}
+                        className={`flex cursor-pointer items-start gap-3 rounded-sm border p-3 transition-colors
+                          ${
+                            selectedAddressId === String(addr.idDireccion)
+                              ? "border-gray-900 bg-gray-50"
+                              : "border-gray-200 hover:border-gray-400"
+                          }`}
+                      >
+                        <input
+                          type="radio"
+                          name="direccion"
+                          value={addr.idDireccion}
+                          checked={selectedAddressId === String(addr.idDireccion)}
+                          onChange={() => setSelectedAddressId(String(addr.idDireccion))}
+                          className="mt-0.5 accent-gray-900"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {addr.nombreRecibe}
+                            {addr.esPrincipal && (
+                              <span className="ml-2 text-[10px] font-bold uppercase tracking-wider
+                                               text-[#775a19] bg-amber-50 px-1.5 py-0.5 rounded">
+                                Principal
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {addr.direccion}, {addr.ciudad}
+                          </p>
+                          {addr.departamento && (
+                            <p className="text-xs text-gray-400">{addr.departamento}</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleDeleteAddress(addr.idDireccion);
+                          }}
+                          disabled={deletingId === addr.idDireccion}
+                          className="text-xs text-red-400 hover:text-red-600 transition-colors shrink-0"
+                          aria-label="Eliminar dirección"
+                        >
+                          {deletingId === addr.idDireccion ? "…" : "✕"}
+                        </button>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {/* Preview de la dirección seleccionada */}
+                {selectedAddress && (
+                  <div className="mt-2 rounded-sm bg-gray-50 border border-gray-100 px-3 py-2 text-xs text-gray-500">
+                    {selectedAddress.telefonoContacto && (
+                      <p>Tel: {selectedAddress.telefonoContacto}</p>
+                    )}
+                    {selectedAddress.indicaciones && (
+                      <p>Ref: {selectedAddress.indicaciones}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* ── Método de pago ── */}
               <label className="block">
                 <span className="text-xs tracking-widest uppercase text-gray-500 font-semibold">
                   Método de pago
