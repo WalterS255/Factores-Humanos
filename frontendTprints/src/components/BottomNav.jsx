@@ -19,7 +19,8 @@ export default function BottomNav() {
             >
               <img
                 src={item.icon}
-                alt={item.label}
+                alt=""
+                aria-hidden="true"
                 className="w-6 h-6"
               />
 
