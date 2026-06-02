@@ -40,6 +40,39 @@ function getStoredCart() {
   }
 }
 
+// ── Modal base con overlay animado ───────────────────────────────────────────
+function Modal({ children, onClose, label }) {
+  // Cerrar con Escape
+  useEffect(() => {
+    const handler = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={label}
+    >
+      {/* Overlay */}
+      <div
+        className="absolute inset-0 bg-[#1b1c19]/60 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+      {/* Panel */}
+      <div
+        className="relative w-full sm:max-w-lg bg-[#fbf9f4] shadow-2xl
+                   rounded-t-2xl sm:rounded-sm border-t border-gray-200 sm:border
+                   max-h-[90dvh] overflow-y-auto"
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 // ── Modal para crear una nueva dirección ──────────────────────────────────────
 function AddressModal({ onClose, onSaved }) {
   const [form, setForm] = useState(EMPTY_FORM);
@@ -66,141 +99,181 @@ function AddressModal({ onClose, onSaved }) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Nueva dirección de envío"
-    >
-      <div className="w-full max-w-lg rounded-sm bg-white p-6 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
+    <Modal onClose={onClose} label="Nueva dirección de envío">
+      {/* Encabezado */}
+      <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-200">
+        <div>
+          <p className="text-xs tracking-widest uppercase text-[#775a19] font-semibold mb-1">
+            Envío
+          </p>
           <h3
-            className="text-xl text-gray-900"
+            className="text-2xl text-[#1b1c19] leading-tight"
             style={{ fontFamily: "'Noto Serif', serif" }}
           >
-            Nueva dirección de envío
+            Nueva dirección
           </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 text-2xl leading-none"
-            aria-label="Cerrar"
-          >
-            ×
-          </button>
         </div>
+        <button
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="grid h-9 w-9 place-items-center rounded-full border border-gray-200
+                     text-gray-400 hover:border-gray-400 hover:text-gray-700 transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
+        </button>
+      </div>
 
+      {/* Cuerpo */}
+      <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
         {error && (
-          <p className="mb-4 rounded bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
-            {error}
-          </p>
+          <div className="flex items-start gap-3 rounded-sm bg-red-50 border border-red-200 px-4 py-3">
+            <svg className="mt-0.5 shrink-0 text-red-500" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M8 5v3.5M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field
-              label="Nombre de quien recibe *"
-              name="nombreRecibe"
-              value={form.nombreRecibe}
-              onChange={handleChange}
-              required
-            />
-            <Field
-              label="Teléfono de contacto"
-              name="telefonoContacto"
-              value={form.telefonoContacto}
-              onChange={handleChange}
-            />
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Nombre de quien recibe" name="nombreRecibe" value={form.nombreRecibe} onChange={handleChange} required />
+          <Field label="Teléfono de contacto" name="telefonoContacto" value={form.telefonoContacto} onChange={handleChange} placeholder="Ej: 3001234567" />
+        </div>
 
-          <Field
-            label="Dirección *"
-            name="direccion"
-            value={form.direccion}
-            onChange={handleChange}
-            required
-            placeholder="Calle, número, apartamento…"
-          />
+        <Field label="Dirección" name="direccion" value={form.direccion} onChange={handleChange} required placeholder="Calle, número, apartamento…" />
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field
-              label="Ciudad *"
-              name="ciudad"
-              value={form.ciudad}
-              onChange={handleChange}
-              required
-            />
-            <Field
-              label="Departamento"
-              name="departamento"
-              value={form.departamento}
-              onChange={handleChange}
-            />
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Ciudad" name="ciudad" value={form.ciudad} onChange={handleChange} required />
+          <Field label="Departamento" name="departamento" value={form.departamento} onChange={handleChange} />
+        </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field
-              label="Código postal"
-              name="codigoPostal"
-              value={form.codigoPostal}
-              onChange={handleChange}
-            />
-            <Field
-              label="Indicaciones adicionales"
-              name="indicaciones"
-              value={form.indicaciones}
-              onChange={handleChange}
-              placeholder="Barrio, referencia…"
-            />
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Código postal" name="codigoPostal" value={form.codigoPostal} onChange={handleChange} />
+          <Field label="Indicaciones / Barrio" name="indicaciones" value={form.indicaciones} onChange={handleChange} placeholder="Barrio, referencia…" />
+        </div>
 
-          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+        {/* Checkbox principal */}
+        <label className="flex items-center gap-3 cursor-pointer group">
+          <div className={`relative h-5 w-5 shrink-0 rounded border transition-colors
+            ${form.esPrincipal ? "bg-[#1b1c19] border-[#1b1c19]" : "border-gray-300 bg-white group-hover:border-gray-500"}`}>
+            {form.esPrincipal && (
+              <svg className="absolute inset-0 m-auto text-white" width="11" height="9" viewBox="0 0 11 9" fill="none">
+                <path d="M1 4l3 3 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
             <input
               type="checkbox"
               name="esPrincipal"
               checked={form.esPrincipal}
               onChange={handleChange}
-              className="accent-gray-900"
+              className="absolute inset-0 opacity-0 cursor-pointer"
             />
-            Establecer como dirección principal
-          </label>
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 border border-gray-300 text-gray-700 text-xs tracking-widest
-                         uppercase py-2.5 rounded-sm hover:bg-gray-50 transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 bg-gray-900 text-white text-xs tracking-widest uppercase
-                         py-2.5 rounded-sm hover:bg-gray-700 transition-colors
-                         disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              {saving ? "Guardando…" : "Guardar dirección"}
-            </button>
           </div>
-        </form>
+          <div>
+            <p className="text-sm font-medium text-gray-800">Establecer como dirección principal</p>
+            <p className="text-xs text-gray-400">Se seleccionará automáticamente al hacer pedidos</p>
+          </div>
+        </label>
+
+        {/* Acciones */}
+        <div className="flex gap-3 pt-2 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 border border-gray-300 text-gray-700 text-xs tracking-widest
+                       uppercase py-3 rounded-sm hover:bg-gray-100 transition-colors"
+            style={{ fontFamily: "'Noto Serif', serif" }}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 bg-[#1b1c19] text-white text-xs tracking-widest uppercase
+                       py-3 rounded-sm hover:bg-gray-700 transition-colors
+                       disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            style={{ fontFamily: "'Noto Serif', serif" }}
+          >
+            {saving ? (
+              <>
+                <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                Guardando…
+              </>
+            ) : "Guardar dirección"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+// ── Modal de confirmación para eliminar ───────────────────────────────────────
+function ConfirmModal({ message, onConfirm, onCancel }) {
+  return (
+    <Modal onClose={onCancel} label="Confirmar acción">
+      <div className="px-6 pt-6 pb-4 border-b border-gray-200 flex items-center justify-between">
+        <h3
+          className="text-2xl text-[#1b1c19]"
+          style={{ fontFamily: "'Noto Serif', serif" }}
+        >
+          Confirmar
+        </h3>
+        <button
+          onClick={onCancel}
+          aria-label="Cerrar"
+          className="grid h-9 w-9 place-items-center rounded-full border border-gray-200
+                     text-gray-400 hover:border-gray-400 hover:text-gray-700 transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
+        </button>
       </div>
-    </div>
+      <div className="px-6 py-6">
+        <p className="text-sm text-gray-600 leading-relaxed">{message}</p>
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onCancel}
+            className="flex-1 border border-gray-300 text-gray-700 text-xs tracking-widest
+                       uppercase py-3 rounded-sm hover:bg-gray-100 transition-colors"
+            style={{ fontFamily: "'Noto Serif', serif" }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 bg-red-600 text-white text-xs tracking-widest uppercase
+                       py-3 rounded-sm hover:bg-red-700 transition-colors"
+            style={{ fontFamily: "'Noto Serif', serif" }}
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
 function Field({ label, name, value, onChange, required, placeholder }) {
   return (
     <label className="block">
-      <span className="text-xs text-gray-500 font-semibold">{label}</span>
+      <span className="text-xs tracking-wide text-gray-500 font-semibold uppercase">
+        {label}{required && <span className="text-[#775a19] ml-0.5">*</span>}
+      </span>
       <input
         name={name}
         value={value}
         onChange={onChange}
         required={required}
         placeholder={placeholder}
-        className="mt-1 h-10 w-full border border-gray-200 bg-gray-50 px-3 text-sm
-                   outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 rounded-sm"
+        className="mt-1.5 h-11 w-full border border-gray-200 bg-white px-3 text-sm text-gray-900
+                   placeholder:text-gray-300 outline-none rounded-sm
+                   focus:border-[#1b1c19] focus:ring-2 focus:ring-[#1b1c19]/10 transition-colors"
       />
     </label>
   );
@@ -215,6 +288,7 @@ export default function OrdersPage() {
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [metodoPago, setMetodoPago] = useState("PSE");
   const [showModal, setShowModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null); // id a eliminar
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loadingOrder, setLoadingOrder] = useState(false);
@@ -254,7 +328,6 @@ export default function OrdersPage() {
   };
 
   const handleDeleteAddress = async (id) => {
-    if (!window.confirm("¿Eliminar esta dirección?")) return;
     setDeletingId(id);
     try {
       await deleteAddress(id);
@@ -264,6 +337,7 @@ export default function OrdersPage() {
       setError(err.message || "No se pudo eliminar la dirección");
     } finally {
       setDeletingId(null);
+      setConfirmDelete(null);
     }
   };
 
@@ -359,6 +433,14 @@ export default function OrdersPage() {
         <AddressModal
           onClose={() => setShowModal(false)}
           onSaved={handleAddressSaved}
+        />
+      )}
+
+      {confirmDelete !== null && (
+        <ConfirmModal
+          message="¿Estás seguro de que quieres eliminar esta dirección? Esta acción no se puede deshacer."
+          onConfirm={() => handleDeleteAddress(confirmDelete)}
+          onCancel={() => setConfirmDelete(null)}
         />
       )}
 
@@ -569,13 +651,23 @@ export default function OrdersPage() {
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            handleDeleteAddress(addr.idDireccion);
+                            setConfirmDelete(addr.idDireccion);
                           }}
                           disabled={deletingId === addr.idDireccion}
-                          className="text-xs text-red-400 hover:text-red-600 transition-colors shrink-0"
+                          className="grid h-7 w-7 place-items-center rounded-full text-gray-300
+                                     hover:bg-red-50 hover:text-red-500 transition-colors shrink-0"
                           aria-label="Eliminar dirección"
                         >
-                          {deletingId === addr.idDireccion ? "…" : "✕"}
+                          {deletingId === addr.idDireccion ? (
+                            <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                            </svg>
+                          ) : (
+                            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                            </svg>
+                          )}
                         </button>
                       </label>
                     ))}
