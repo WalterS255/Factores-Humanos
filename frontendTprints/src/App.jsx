@@ -19,7 +19,7 @@ export default function App() {
   return (
     <Routes>
       {/* Redirección por defecto */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<Navigate to="/inicio" replace />} />
       
       {/* Otras rutas */}
       <Route path="/inicio" element={<HomePage />} />
