@@ -702,11 +702,15 @@ export default function OrdersPage() {
               </div>
 
               {/* ── Método de pago ── */}
-              <label className="block">
-                <span className="text-xs tracking-widest uppercase text-gray-500 font-semibold">
+              <div className="block">
+                <label
+                  htmlFor="metodo-pago"
+                  className="text-xs tracking-widest uppercase text-gray-500 font-semibold"
+                >
                   Método de pago
-                </span>
+                </label>
                 <select
+                  id="metodo-pago"
                   value={metodoPago}
                   onChange={(e) => setMetodoPago(e.target.value)}
                   className="mt-2 h-11 w-full border border-gray-200 bg-gray-50 px-3 text-sm
@@ -719,7 +723,7 @@ export default function OrdersPage() {
                   <option value="TRANSFERENCIA">Transferencia</option>
                   <option value="EFECTIVO">Efectivo</option>
                 </select>
-              </label>
+              </div>
             </div>
 
             <div className="space-y-3 border-t border-gray-100 pt-5 pb-5 text-sm">
