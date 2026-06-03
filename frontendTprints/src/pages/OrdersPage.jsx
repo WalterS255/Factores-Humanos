@@ -166,6 +166,7 @@ function AddressModal({ onClose, onSaved }) {
             <input
               type="checkbox"
               name="esPrincipal"
+              aria-label="Establecer como dirección principal"
               checked={form.esPrincipal}
               onChange={handleChange}
               className="absolute inset-0 opacity-0 cursor-pointer"
@@ -641,6 +642,7 @@ export default function OrdersPage() {
                           type="radio"
                           name="direccion"
                           value={addr.idDireccion}
+                          aria-label={`Seleccionar dirección de ${addr.nombreRecibe}`}
                           checked={selectedAddressId === String(addr.idDireccion)}
                           onChange={() => setSelectedAddressId(String(addr.idDireccion))}
                           className="mt-0.5 accent-gray-900"

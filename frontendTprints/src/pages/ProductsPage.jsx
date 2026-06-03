@@ -31,7 +31,9 @@ function normalizeProducts(productsFromBackend) {
         id: variant.idVariante,
         idProducto: product.idProducto,
         idVariante: variant.idVariante,
-        name: product.nombre,
+        // WCAG 1.3.1: el nombre nunca debe quedar vacío para no generar
+        // encabezados <h2> sin contenido (fallo de "encabezado vacío").
+        name: (product.nombre || "").trim() || "Producto sin nombre",
         description: product.descripcion,
         color: variant.color,
         size: variant.talla,
