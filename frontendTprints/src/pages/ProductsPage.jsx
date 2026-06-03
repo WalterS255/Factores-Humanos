@@ -322,12 +322,16 @@ export default function ProductsPage() {
 
           <nav aria-label="Vínculos legales" className="flex flex-wrap gap-8">
             {["Privacidad", "Términos", "Envíos y devoluciones"].map((label) => (
-              <span
+              <a
                 key={label}
-                className="text-[10px] tracking-widest uppercase text-gray-400"
+                href="#"
+                className="text-[10px] tracking-widest uppercase text-gray-400
+                           hover:text-gray-600 transition-colors
+                           focus-visible:outline focus-visible:outline-2
+                           focus-visible:outline-offset-2 focus-visible:outline-gray-400"
               >
                 {label}
-              </span>
+              </a>
             ))}
           </nav>
 

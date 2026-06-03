@@ -260,22 +260,29 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
 }
 
 function Field({ label, name, value, onChange, required, placeholder }) {
+  const inputId = `field-${name}`;
   return (
-    <label className="block">
-      <span className="text-xs tracking-wide text-gray-500 font-semibold uppercase">
-        {label}{required && <span className="text-[#775a19] ml-0.5">*</span>}
-      </span>
+    <div className="block">
+      <label
+        htmlFor={inputId}
+        className="text-xs tracking-wide text-gray-500 font-semibold uppercase"
+      >
+        {label}{required && <span className="text-[#775a19] ml-0.5" aria-hidden="true">*</span>}
+        {required && <span className="sr-only"> (obligatorio)</span>}
+      </label>
       <input
+        id={inputId}
         name={name}
         value={value}
         onChange={onChange}
         required={required}
         placeholder={placeholder}
+        aria-required={required ? "true" : undefined}
         className="mt-1.5 h-11 w-full border border-gray-200 bg-white px-3 text-sm text-gray-900
                    placeholder:text-gray-300 outline-none rounded-sm
                    focus:border-[#1b1c19] focus:ring-2 focus:ring-[#1b1c19]/10 transition-colors"
       />
-    </label>
+    </div>
   );
 }
 
