@@ -535,6 +535,7 @@ export default function OrdersPage() {
 
                       <button
                         onClick={() => removeItem(item.idVariante)}
+                        aria-label={`Eliminar ${item.name} del carrito`}
                         className="w-fit text-sm font-semibold text-red-500 hover:text-red-600 transition-colors"
                       >
                         Eliminar
@@ -550,20 +551,26 @@ export default function OrdersPage() {
                           onClick={() =>
                             updateQuantity(item.idVariante, Number(item.quantity || 1) - 1)
                           }
+                          aria-label={`Disminuir cantidad de ${item.name}`}
                           className="grid h-9 w-9 place-items-center text-gray-500 hover:bg-gray-100 transition-colors"
                         >
-                          -
+                          <span aria-hidden="true">-</span>
                         </button>
-                        <span className="grid h-9 min-w-10 place-items-center px-3 text-sm font-bold">
+                        <span
+                          className="grid h-9 min-w-10 place-items-center px-3 text-sm font-bold"
+                          aria-live="polite"
+                          aria-label={`Cantidad de ${item.name}: ${item.quantity}`}
+                        >
                           {item.quantity}
                         </span>
                         <button
                           onClick={() =>
                             updateQuantity(item.idVariante, Number(item.quantity || 1) + 1)
                           }
+                          aria-label={`Aumentar cantidad de ${item.name}`}
                           className="grid h-9 w-9 place-items-center text-gray-500 hover:bg-gray-100 transition-colors"
                         >
-                          +
+                          <span aria-hidden="true">+</span>
                         </button>
                       </div>
                     </div>
